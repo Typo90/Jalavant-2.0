@@ -31,37 +31,6 @@ public class DataViewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_data_view);
 
 
-        //----------------------------------------------------
-        // Wifi Init
-        //----------------------------------------------------
-
-        manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        channel = manager.initialize(this, getMainLooper(), null);
-        receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
-
-        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Log.d("test", "Success discover" );
-            }
-
-            @Override
-            public void onFailure(int reasonCode) {
-                Log.d("test", ""+reasonCode );
-            }
-        });
-
-        WifiP2pManager.PeerListListener myPeerListListener = null;
-
-        if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(Context.WIFI_P2P_SERVICE)) {
-
-            // request available peers from the wifi p2p manager. This is an
-            // asynchronous call and the calling activity is notified with a
-            // callback on PeerListListener.onPeersAvailable()
-            if (manager != null) {
-                manager.requestPeers(channel, myPeerListListener);
-            }
-        }
 
         //obtain a peer from the WifiP2pDeviceList
 //        WifiP2pDevice device;
@@ -83,12 +52,12 @@ public class DataViewActivity extends AppCompatActivity {
         //----------------------------------------------------
         // WebView Init
         //----------------------------------------------------
-//        webView = (WebView) findViewById(R.id.webView);
-//        webView.loadUrl("http://172.20.10.9:5000");        //webView.loadUrl("http://www.google.com");
-//
+        webView = (WebView) findViewById(R.id.webView);
+        webView.loadUrl("http://192.168.4.1:80");        //webView.loadUrl("http://www.google.com");
+
 //        try {
 //            StringBuilder sb = new StringBuilder();
-//            URL url = new URL("http://172.20.10.9:5000");
+//            URL url = new URL("http://192.168.4.1:80");
 //
 //            BufferedReader in;
 //            in = new BufferedReader(
@@ -101,10 +70,90 @@ public class DataViewActivity extends AppCompatActivity {
 //
 //            in.close();
 //
-//            Log.d("test", "onClick data: "+ sb.toString());
+//            Log.d("Wifi", "onClick data: "+ sb.toString());
 //
 //        } catch (Exception e) {
+//            Log.d("Wifi", "fail"+ e.toString());
 //            e.printStackTrace();
 //        }
+
+
+//        Thread thread = new Thread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                URL url = null;
+//                try {
+//                    url = new URL("http://192.168.4.1:80");
+//
+//                    try{
+//                        Log.d("Wifi", "read success!");
+//                        BufferedReader in = new BufferedReader(
+//                                new InputStreamReader(
+//                                        url.openStream()));
+//
+//                        String inputLine;
+//                        while ((inputLine = in.readLine()) != null)
+//                            Log.d("Wifi", "read success: "+ inputLine);
+//
+//                        in.close();
+//                    }catch (Exception e2){
+//                        Log.d("Wifi", "buffer read fail"+ e2.toString());
+//                    }
+//
+//                } catch (MalformedURLException e) {
+//                    Log.d("Wifi", "create URL fail"+ e.toString());
+//                    e.printStackTrace();
+//                }
+//
+//            }
+//        });
+
+        //thread.start();
+        new Thread(new ClientThread()).start();
+
+
+
+
+    }
+    class ClientThread implements Runnable {
+        private String msg;
+        Socket s;
+        PrintWriter pw;
+        String type;
+        BufferedReader bufferedReader;
+
+
+        public void run() {
+            try {
+                Log.d("Wifi", "Enter Try");
+                s = new Socket("192.168.4.1", 80);
+                Log.d("Wifi", "Socket Create");
+                //pw = new PrintWriter(s.getOutputStream());
+                //pw.write(msg);
+                //pw.flush();
+//                bufferedReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                bufferedReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                Log.d("Wifi", "Buffer create");
+                //String msg2 = bufferedReader.readLine();
+
+                String inputLine;
+                while ((inputLine = bufferedReader.readLine()) != null)
+                    Log.d("Wifi", "read success: "+ inputLine);
+
+                bufferedReader.close();
+                //pw.close();
+                s.close();
+            } catch (UnknownHostException e) {
+                Log.d("Wifi", "UnknownHost: "+ e.toString());
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.d("Wifi", "IOException: "+ e.toString());
+                e.printStackTrace();
+            } catch (Exception e){
+                Log.d("Wifi", "Exception: "+ e.toString());
+                e.printStackTrace();
+            }
+        }
     }
 }

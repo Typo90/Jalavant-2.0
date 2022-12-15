@@ -6,6 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
@@ -13,32 +15,26 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
+
 import java.nio.channels.Channel;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private Button btn_connect;
-    IntentFilter intentFilter;
-    WifiManager wifiManager;
+    // Declare a WifiManager object
+    private WifiManager wifiManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            boolean flag = wifiManager.isEasyConnectSupported();
-            Log.d("test", ""+flag);
-        }else{
-            Log.d("test", "onCreate: EasyConnect not support+");
-        }
 
-        intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-
+        // Initialize the WifiManager object
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         //connect button | Jump to the ConnectionViewActivity
         btn_connect = findViewById(R.id.btn_connection);
@@ -46,23 +42,47 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(MainActivity.this,DataViewActivity.class);
-                startActivity(intent);
+                // Check if Wi-Fi is enabled, if not, enable it
+                if (!wifiManager.isWifiEnabled()) {
+                    wifiManager.setWifiEnabled(true);
+                }
+
+                // Connect to the specified Wi-Fi network
+                String networkSSID = "Jalavant";
+                String networkPassword = "Jalavant";
+                WifiConfiguration wifiConfig = new WifiConfiguration();
+                wifiConfig.SSID = String.format("\"%s\"", networkSSID);
+                wifiConfig.preSharedKey = String.format("\"%s\"", networkPassword);
+
+
+                // Check if Wi-Fi is enabled and connected to a network
+                if (wifiManager.isWifiEnabled()) {
+                    // Wi-Fi is enabled, check if we are connected to a network
+                    if (wifiManager.getConnectionInfo().getNetworkId() != -1) {
+                        // We are connected to a network
+                        String ssid = wifiManager.getConnectionInfo().getSSID();
+                        Log.d("Wifi", "Connected to " + ssid);
+
+                        // Jump to next page
+                        Intent intent = new Intent(MainActivity.this,DataViewActivity.class);
+                        startActivity(intent);
+
+                    } else {
+                        // We are not connected to a network
+                        Toast.makeText(MainActivity.this,"Connect failed, Please try again",Toast.LENGTH_LONG).show();
+                        Log.d("Wifi", "Not connected to any network");
+                    }
+                } else {
+                    // Wi-Fi is not enabled
+                    Toast.makeText(MainActivity.this,"Wi-Fi is not enabled",Toast.LENGTH_LONG).show();
+                    Log.d("Wifi", "Wi-Fi is not enabled");
+                }
 
             }
         });
     }
 
-    /* register the broadcast receiver with the intent values to be matched */
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        registerReceiver(receiver, intentFilter);
-//    }
-//    /* unregister the broadcast receiver */
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//        unregisterReceiver(receiver);
-//    }
+
+
+
 }
