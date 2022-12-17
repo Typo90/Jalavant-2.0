@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize the WifiManager object
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        //connect button | Jump to the ConnectionViewActivity
+        //connect button | Jump to the ControlViewActivity
         btn_connect = findViewById(R.id.btn_connection);
         btn_connect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,6 +55,11 @@ public class MainActivity extends AppCompatActivity {
                 wifiConfig.preSharedKey = String.format("\"%s\"", networkPassword);
 
 
+                int netId = wifiManager.addNetwork(wifiConfig);
+                wifiManager.disconnect();
+                wifiManager.enableNetwork(netId, true);
+                wifiManager.reconnect();
+
                 // Check if Wi-Fi is enabled and connected to a network
                 if (wifiManager.isWifiEnabled()) {
                     // Wi-Fi is enabled, check if we are connected to a network
@@ -64,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Wifi", "Connected to " + ssid);
 
                         // Jump to next page
-                        Intent intent = new Intent(MainActivity.this,DataViewActivity.class);
+                        Intent intent = new Intent(MainActivity.this, ControlViewActivity.class);
                         startActivity(intent);
 
                     } else {
@@ -80,6 +85,18 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        wifiManager.disconnect();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        wifiManager.disconnect();
     }
 
 
